@@ -52,9 +52,12 @@ try:
     if uploaded_file is not None:
         actual_df, forecast_df = load_data_from_bytes(uploaded_file.getvalue())
         st.sidebar.caption(f"Using uploaded file: {uploaded_file.name}")
-    else:
+    elif os.path.exists(DEFAULT_DATA_PATH):
         actual_df, forecast_df = load_data(DEFAULT_DATA_PATH)
         st.sidebar.caption("Using default sample dataset")
+    else:
+        st.info("Upload an Excel file to start the analysis.")
+        st.stop()
 except Exception as e:
     st.error(
         "Could not load the selected file. Ensure it has sheets named "
