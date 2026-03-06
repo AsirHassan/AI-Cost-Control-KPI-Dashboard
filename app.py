@@ -9,7 +9,7 @@ import numpy as np
 
 sys.path.append(os.path.dirname(__file__))
 
-from utils.data_loader import load_data, load_data_from_bytes
+from utils.data_loader import load_data
 from utils.aggregations import aggregate_monthly, top_gl_groups, aggregate_with_forecast
 from utils.anomaly_detection import detect_anomalies
 from utils.charts import (
@@ -39,61 +39,10 @@ st.markdown(
 st.divider()
 
 
-# Data source (uploaded file or default sample)
+# Load data (from fixed path; no upload UI)
 DEFAULT_DATA_PATH = "data/finance_case_study_synthetic_data_TH-2.xlsx"
-st.sidebar.header("Data Source")
-uploaded_file = st.sidebar.file_uploader(
-    "Upload Excel file (.xlsx)",
-    type=["xlsx"],
-    help="Workbook must contain sheets: Actual_Data and Forecast_Data",
-)
 
-try:
-    if uploaded_file is not None:
-        actual_df, forecast_df = load_data_from_bytes(uploaded_file.getvalue())
-        st.sidebar.caption(f"Using uploaded file: {uploaded_file.name}")
-    elif os.path.exists(DEFAULT_DATA_PATH):
-        actual_df, forecast_df = load_data(DEFAULT_DATA_PATH)
-        st.sidebar.caption("Using default sample dataset")
-    else:
-        st.info("Upload an Excel file to start the analysis.")
-        st.stop()
-except Exception as e:
-    st.error(
-        "Could not load the selected file. Ensure it has sheets named "
-        "'Actual_Data' and 'Forecast_Data'."
-    )
-    st.error(f"Load error: {e}")
-    st.stop()
-
-required_actual_cols = {
-    "Posting Date",
-    "Accounting Month",
-    "Department",
-    "G/L Group Identifier",
-    "G/L Group Name",
-    "Amount",
-    "Currency",
-}
-required_forecast_cols = {
-    "Accounting Month",
-    "Department",
-    "G/L Group Identifier",
-    "G/L Group Name",
-    "Total Cost",
-    "Currency",
-}
-
-missing_actual = sorted(required_actual_cols - set(actual_df.columns))
-missing_forecast = sorted(required_forecast_cols - set(forecast_df.columns))
-
-if missing_actual:
-    st.error(f"Actual_Data is missing columns: {missing_actual}")
-    st.stop()
-
-if missing_forecast:
-    st.error(f"Forecast_Data is missing columns: {missing_forecast}")
-    st.stop()
+actual_df, forecast_df = load_data(DEFAULT_DATA_PATH)
 
 
 # EUR-only validation (per your dataset)
@@ -108,7 +57,6 @@ if forecast_df["Currency"].nunique() != 1 or forecast_df["Currency"].iloc[0] != 
 
 
 # This is the sidebar filters and navigation section
-st.sidebar.divider()
 st.sidebar.header("Filters")
 
 department = st.sidebar.selectbox(

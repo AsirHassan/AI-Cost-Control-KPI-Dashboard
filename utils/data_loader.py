@@ -1,11 +1,11 @@
-from __future__ import annotations
-
-from io import BytesIO
 import pandas as pd
 import streamlit as st
 
+@st.cache_data
+def load_data(path):
+    actual = pd.read_excel(path, sheet_name="Actual_Data")
+    forecast = pd.read_excel(path, sheet_name="Forecast_Data")
 
-def _normalize_frames(actual: pd.DataFrame, forecast: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     actual.columns = actual.columns.str.strip()
     forecast.columns = forecast.columns.str.strip()
 
@@ -17,20 +17,5 @@ def _normalize_frames(actual: pd.DataFrame, forecast: pd.DataFrame) -> tuple[pd.
     forecast["Currency"] = forecast["Currency"].astype(str)
 
     actual["YearMonth"] = actual["Posting Date"].dt.to_period("M")
+
     return actual, forecast
-
-
-@st.cache_data
-def load_data(path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
-    actual = pd.read_excel(path, sheet_name="Actual_Data")
-    forecast = pd.read_excel(path, sheet_name="Forecast_Data")
-    return _normalize_frames(actual, forecast)
-
-
-@st.cache_data
-def load_data_from_bytes(file_bytes: bytes) -> tuple[pd.DataFrame, pd.DataFrame]:
-    workbook = BytesIO(file_bytes)
-    actual = pd.read_excel(workbook, sheet_name="Actual_Data")
-    workbook.seek(0)
-    forecast = pd.read_excel(workbook, sheet_name="Forecast_Data")
-    return _normalize_frames(actual, forecast)
