@@ -1,13 +1,13 @@
-# Finance Cost Control Dashboard – Case Study
+# AI-Finance Cost Control Dashboard 
 
 ## Overview
 
-This project was developed as part of a **Data Analyst & Finance Intern case study**.  
+This project was developed as part of a **Data Analyst & Finance Intern**.  
 The objective is to demonstrate how data analytics, forecasting, and automation can support **cost transparency, anomaly detection, and finance decision-making** in a plant controlling environment.
 
 The application is built using **Python and Streamlit**, with a strong focus on usability, explainability, and practical finance workflows rather than technical complexity.
 
-All data used in this project is **synthetic** and provided as part of the case study.
+All data used in this project is **synthetic** and provided as part of the project.
 
 ---
 
@@ -27,26 +27,26 @@ The solution is designed to reflect how such a tool could realistically be used 
 
 ## Key Features
 
-### 1. Cost Transparency (Task 1)
+### 1. Cost Transparency (Tab 1)
 - Tabular view of all expense records
 - Interactive filters (Department, G/L Group, Accounting Month)
 - Monthly total expense trend
 - Top cost-driving G/L groups
 - Summary KPIs for quick interpretation
 
-### 2. Forecasting & Dynamic Anomaly Detection (Task 2)
+### 2. Forecasting & Dynamic Anomaly Detection (Tab 2)
 - Rolling historical averages used as expected cost benchmarks
 - Automatic detection of unusual cost spikes and drops
 - Visualization of actual vs. expected cost behavior
 - Dynamic detection based on historical patterns rather than static thresholds
 
-### 3. Automated Cost Anomaly Workflow (Task 3)
+### 3. Automated Cost Anomaly Workflow (Tab 3)
 - Dedicated anomaly review panel
 - Status tracking (New, Reviewed, Explained, Action Required)
 - Finance notes for documentation and auditability
 - Exception-based workflow to reduce month-end workload
 
-### 4. AI-Generated Finance Insights (Task 4)
+### 4. AI-Generated Finance Insights (Tab 4)
 - Short AI-generated summaries based on detected anomalies and forecasts
 - Designed to support, not replace, finance judgment
 - AI does not generate financial figures or forecasts
