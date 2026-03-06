@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import os
 import sys
+from html import escape
+
+import numpy as np
 import pandas as pd
 import streamlit as st
-import numpy as np
 
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -29,13 +31,358 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.markdown(
-    """
-# 💼 Cost Control Dashboard  
-**Expense transparency, forecasting & anomaly detection**  
-"""
-)
-st.divider()
+THEMES = {
+    "Midnight Operator": {
+        "app_bg": "#05070d",
+        "ink": "#e6edf7",
+        "muted": "#9fb1c8",
+        "panel": "#0f1729",
+        "panel_soft": "#121d33",
+        "line": "#223451",
+        "accent": "#2ec4b6",
+        "accent_2": "#2b8ef9",
+        "hero_a": "#15243f",
+        "hero_b": "#0f766e",
+        "hero_ink": "#f2f8ff",
+        "sidebar_bg": "#040913",
+        "sidebar_bg_2": "#0a1427",
+        "sidebar_ink": "#d7e4ff",
+    },
+    "Deep Cyan Night": {
+        "app_bg": "#061017",
+        "ink": "#e4f7ff",
+        "muted": "#8fb3c7",
+        "panel": "#0b1b26",
+        "panel_soft": "#10222f",
+        "line": "#1f3b4e",
+        "accent": "#0ea5e9",
+        "accent_2": "#14b8a6",
+        "hero_a": "#0f3b60",
+        "hero_b": "#0a6d82",
+        "hero_ink": "#f0fbff",
+        "sidebar_bg": "#06131f",
+        "sidebar_bg_2": "#0a2234",
+        "sidebar_ink": "#d6f2ff",
+    },
+    "Ember Night": {
+        "app_bg": "#140b0b",
+        "ink": "#fee9de",
+        "muted": "#d2a998",
+        "panel": "#211312",
+        "panel_soft": "#2a1716",
+        "line": "#53302c",
+        "accent": "#f97316",
+        "accent_2": "#ef4444",
+        "hero_a": "#5a2712",
+        "hero_b": "#8b1d1d",
+        "hero_ink": "#fff1ea",
+        "sidebar_bg": "#1a0c0c",
+        "sidebar_bg_2": "#2d1111",
+        "sidebar_ink": "#ffe8dd",
+    },
+}
+
+
+def apply_theme(theme_name: str) -> None:
+    palette = THEMES[theme_name]
+    st.markdown(
+        f"""
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Sans+3:wght@400;600;700&display=swap');
+
+            .stApp {{
+                background:
+                    radial-gradient(circle at 12% -8%, rgba(56, 189, 248, 0.20) 0%, rgba(56, 189, 248, 0) 50%),
+                    radial-gradient(circle at 88% 6%, rgba(45, 212, 191, 0.14) 0%, rgba(45, 212, 191, 0) 40%),
+                    linear-gradient(160deg, {palette["app_bg"]} 0%, {palette["sidebar_bg"]} 100%);
+                color: {palette["ink"]};
+                font-family: "Source Sans 3", sans-serif;
+            }}
+
+            .main .block-container {{
+                max-width: 1320px;
+                padding-top: 1.2rem;
+                padding-bottom: 2.5rem;
+            }}
+
+            h1, h2, h3, h4, h5 {{
+                color: {palette["ink"]};
+                font-family: "Space Grotesk", sans-serif;
+                letter-spacing: -0.02em;
+            }}
+
+            .stApp p,
+            .stApp label,
+            .stApp span,
+            .stApp li,
+            .stApp small {{
+                color: {palette["ink"]};
+            }}
+
+            .hero-panel {{
+                background: linear-gradient(130deg, {palette["hero_a"]} 0%, {palette["hero_b"]} 75%);
+                border-radius: 1rem;
+                border: 1px solid rgba(255, 255, 255, 0.18);
+                box-shadow: 0 16px 30px rgba(2, 6, 23, 0.16);
+                color: {palette["hero_ink"]};
+                margin-bottom: 0.95rem;
+                overflow: hidden;
+                padding: 1.15rem 1.35rem 1.25rem;
+            }}
+
+            .hero-kicker {{
+                display: inline-block;
+                background: rgba(255, 255, 255, 0.18);
+                border: 1px solid rgba(255, 255, 255, 0.22);
+                border-radius: 999px;
+                font-family: "Space Grotesk", sans-serif;
+                font-size: 0.78rem;
+                font-weight: 600;
+                letter-spacing: 0.04em;
+                margin-bottom: 0.55rem;
+                padding: 0.16rem 0.68rem;
+                text-transform: uppercase;
+            }}
+
+            .hero-title {{
+                color: {palette["hero_ink"]};
+                font-size: clamp(1.55rem, 2.65vw, 2.2rem);
+                line-height: 1.12;
+                margin: 0 0 0.25rem;
+            }}
+
+            .hero-subtitle {{
+                color: rgba(248, 250, 252, 0.92);
+                font-size: 1rem;
+                margin: 0;
+            }}
+
+            .context-strip {{
+                display: grid;
+                gap: 0.6rem;
+                grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+                margin: 0.15rem 0 1.1rem;
+            }}
+
+            .context-chip {{
+                background: {palette["panel"]};
+                border: 1px solid {palette["line"]};
+                border-radius: 0.85rem;
+                box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+                padding: 0.6rem 0.78rem;
+            }}
+
+            .context-chip span {{
+                color: {palette["muted"]};
+                display: block;
+                font-size: 0.77rem;
+                margin-bottom: 0.12rem;
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+            }}
+
+            .context-chip strong {{
+                color: {palette["ink"]};
+                display: block;
+                font-size: 0.98rem;
+                font-weight: 700;
+                line-height: 1.12;
+            }}
+
+            .section-head {{
+                background: {palette["panel_soft"]};
+                border: 1px solid {palette["line"]};
+                border-radius: 0.9rem;
+                margin: 0.15rem 0 1rem;
+                padding: 0.6rem 0.85rem;
+            }}
+
+            .section-head h2 {{
+                font-size: 1.25rem;
+                margin: 0 0 0.12rem;
+            }}
+
+            .section-head p {{
+                color: {palette["muted"]};
+                margin: 0;
+            }}
+
+            [data-baseweb="input"] > div,
+            [data-baseweb="select"] > div,
+            .stMultiSelect > div,
+            [data-baseweb="textarea"] {{
+                background: {palette["panel_soft"]};
+                border: 1px solid {palette["line"]};
+                border-radius: 0.6rem;
+            }}
+
+            [data-baseweb="radio"] label,
+            [data-baseweb="checkbox"] label {{
+                color: {palette["ink"]};
+            }}
+
+            [data-testid="stMetric"] {{
+                background: {palette["panel"]};
+                border: 1px solid {palette["line"]};
+                border-radius: 0.85rem;
+                box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+                padding: 0.65rem 0.8rem;
+            }}
+
+            [data-testid="stMetricLabel"] {{
+                color: {palette["muted"]};
+                font-size: 0.82rem;
+                text-transform: uppercase;
+                letter-spacing: 0.02em;
+            }}
+
+            [data-testid="stMetricValue"] {{
+                font-family: "Space Grotesk", sans-serif;
+                font-size: 1.33rem;
+                letter-spacing: -0.01em;
+            }}
+
+            [data-testid="stMetricDelta"] {{
+                font-size: 0.83rem;
+            }}
+
+            [data-testid="stPlotlyChart"],
+            [data-testid="stDataFrame"],
+            [data-testid="stTable"] {{
+                background: {palette["panel"]};
+                border: 1px solid {palette["line"]};
+                border-radius: 0.9rem;
+                box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+                padding: 0.35rem;
+            }}
+
+            [data-testid="stExpander"] {{
+                border: 1px solid {palette["line"]};
+                border-radius: 0.9rem;
+                box-shadow: 0 5px 16px rgba(15, 23, 42, 0.04);
+                overflow: hidden;
+            }}
+
+            [data-testid="stExpander"] details summary {{
+                background: {palette["panel_soft"]};
+            }}
+
+            [data-testid="stAlert"] {{
+                background: rgba(15, 23, 42, 0.55);
+                border: 1px solid {palette["line"]};
+                border-radius: 0.85rem;
+                color: {palette["ink"]};
+            }}
+
+            hr {{
+                border-color: {palette["line"]};
+            }}
+
+            [data-testid="stSidebar"] {{
+                background: linear-gradient(180deg, {palette["sidebar_bg"]} 0%, {palette["sidebar_bg_2"]} 100%);
+                border-right: 1px solid rgba(255, 255, 255, 0.06);
+            }}
+
+            [data-testid="stSidebar"] * {{
+                color: {palette["sidebar_ink"]};
+            }}
+
+            [data-testid="stSidebar"] [data-baseweb="select"] > div,
+            [data-testid="stSidebar"] [data-baseweb="input"] > div,
+            [data-testid="stSidebar"] .stMultiSelect > div,
+            [data-testid="stSidebar"] [data-baseweb="slider"] {{
+                background-color: rgba(15, 23, 42, 0.48);
+                border: 1px solid rgba(148, 163, 184, 0.28);
+                border-radius: 0.58rem;
+            }}
+
+            .stButton > button,
+            .stDownloadButton > button {{
+                border-radius: 0.65rem;
+                border: 1px solid transparent;
+                box-shadow: 0 6px 15px rgba(2, 6, 23, 0.12);
+                font-family: "Space Grotesk", sans-serif;
+                font-weight: 600;
+                padding: 0.45rem 0.95rem;
+            }}
+
+            .stButton > button {{
+                background: linear-gradient(120deg, {palette["accent"]} 0%, {palette["accent_2"]} 100%);
+                color: #f8fafc;
+            }}
+
+            .stButton > button:hover {{
+                filter: brightness(1.04);
+                transform: translateY(-1px);
+            }}
+
+            @media (max-width: 860px) {{
+                .main .block-container {{
+                    padding-top: 0.95rem;
+                }}
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_header() -> None:
+    st.markdown(
+        """
+        <section class="hero-panel">
+            <div class="hero-kicker">Finance Operations Intelligence</div>
+            <h1 class="hero-title">Cost Control Dashboard</h1>
+            <p class="hero-subtitle">
+                Expense transparency, forecasting signals, and anomaly workflows in one focused workspace.
+            </p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_scope_chips(
+    dataset_label: str,
+    selected_department: str,
+    selected_month_range: tuple[int, int],
+    selected_gl_count: int,
+) -> None:
+    st.markdown(
+        f"""
+        <div class="context-strip">
+            <div class="context-chip">
+                <span>Dataset</span>
+                <strong>{escape(dataset_label)}</strong>
+            </div>
+            <div class="context-chip">
+                <span>Department</span>
+                <strong>{escape(selected_department)}</strong>
+            </div>
+            <div class="context-chip">
+                <span>Month Window</span>
+                <strong>M{selected_month_range[0]} - M{selected_month_range[1]}</strong>
+            </div>
+            <div class="context-chip">
+                <span>G/L Groups in Scope</span>
+                <strong>{selected_gl_count}</strong>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_section_title(title: str, subtitle: str) -> None:
+    st.markdown(
+        f"""
+        <div class="section-head">
+            <h2>{escape(title)}</h2>
+            <p>{escape(subtitle)}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # Data source (top of sidebar): uploaded file or default sample
@@ -51,9 +398,11 @@ try:
     if uploaded_file is not None:
         actual_df, forecast_df = load_data_from_bytes(uploaded_file.getvalue())
         st.sidebar.caption(f"Using uploaded file: {uploaded_file.name}")
+        dataset_source = uploaded_file.name
     else:
         actual_df, forecast_df = load_data(DEFAULT_DATA_PATH)
         st.sidebar.caption("Using default sample dataset")
+        dataset_source = "Default sample dataset"
 except Exception as e:
     st.error(
         "Could not load the selected file. Ensure it has sheets named "
@@ -72,6 +421,17 @@ if forecast_df["Currency"].nunique() != 1 or forecast_df["Currency"].iloc[0] != 
     st.error("Forecast data is not EUR-only. Please provide an EUR-only dataset.")
     st.stop()
 
+
+st.sidebar.divider()
+theme_name = st.sidebar.selectbox(
+    "Theme",
+    options=list(THEMES.keys()),
+    index=0,
+    help="Adjust the app look without changing analytics logic.",
+)
+
+apply_theme(theme_name)
+render_header()
 
 
 # This is the sidebar filters and navigation section
@@ -127,10 +487,20 @@ filtered_forecast = forecast_df[
     & (forecast_df["Accounting Month"].between(month_range[0], month_range[1]))
 ].copy()
 
+render_scope_chips(
+    dataset_label=dataset_source,
+    selected_department=department,
+    selected_month_range=month_range,
+    selected_gl_count=len(gl_groups),
+)
+
 
 # TAB 1: Cost Overview & KPI (Task 1)
 if page == "📊 Cost Overview":
-    st.markdown("## KPI Dashboard — Cost Overview")
+    render_section_title(
+        "KPI Dashboard - Cost Overview",
+        "High-level budget posture, monthly movement, and top cost drivers.",
+    )
 
     if filtered_actual.empty:
         st.warning("No rows match the selected filters.")
@@ -276,7 +646,10 @@ if page == "📊 Cost Overview":
 # TAB 2: Forecast & Dynamic Risk Signals (Task 2)
 
 elif page == "📈 Forecast & Dynamic Risk Signals":
-    st.subheader("Forecast & Dynamic Risk Signals")
+    render_section_title(
+        "Forecast & Dynamic Risk Signals",
+        "Compare actuals to budget and surface material variance patterns.",
+    )
 
     st.info(
         """
@@ -359,7 +732,10 @@ The dashboard focuses on budget compliance (Actual vs Forecast) and flags except
 
 # TAB 3: Anomaly Review Workflow (Task 3)
 elif page == "🚨 Anomaly Review Workflow":
-    st.subheader("Anomaly Review Workflow")
+    render_section_title(
+        "Anomaly Review Workflow",
+        "Track investigation status, likely drivers, and review notes.",
+    )
     st.info(
         """
 This tab shows the review workflow for detected cost exceptions. Anomalies are based on MoM movements in Actuals, supported by Forecast context."""
@@ -555,7 +931,10 @@ This tab shows the review workflow for detected cost exceptions. Anomalies are b
 # TAB 4: AI Finance Insights (Task 4)
 
 elif page == "🧠 AI Generated Finance Insights":
-    st.subheader("AI-Generated Finance Insights")
+    render_section_title(
+        "AI-Generated Finance Insights",
+        "Generate concise risk commentary from anomalies and forecast variance.",
+    )
 
     st.warning(
         "AI-generated insights are based on aggregated analytics and anomaly signals. "
