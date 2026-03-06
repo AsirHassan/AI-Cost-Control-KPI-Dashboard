@@ -1,87 +1,131 @@
-# AI-Finance Cost Control Dashboard 
+# AI Cost Control KPI Dashboard
 
-## Overview
+Interactive finance dashboard for cost transparency, forecast comparison, dynamic anomaly signaling, and AI-assisted executive commentary.
 
-This project was developed as part of a **Data Analyst & Finance Project**.  
-The objective is to demonstrate how data analytics, forecasting, and automation can support **cost transparency, anomaly detection, and finance decision-making** in a plant controlling environment.
+## What This Project Delivers
 
-The application is built using **Python and Streamlit**, with a strong focus on usability, explainability, and practical finance workflows rather than technical complexity.
+- Consolidated monthly cost visibility by department and G/L group.
+- Forecast vs actual variance monitoring with KPI-level summaries.
+- Dynamic month-over-month anomaly detection (spikes and drops).
+- Lightweight anomaly review workflow for finance users.
+- AI-generated short-form insights from aggregated finance signals.
 
-All data used in this project is **synthetic** and provided as part of the project.
+## Application Walkthrough
 
 Live Demo: https://costcontroldashboard.streamlit.app/
 
 ---
 
-## Application Scope
+### 1) Cost Overview
 
-The dashboard supports the following finance use cases:
+- Total Actual, Forecast, Variance, and Variance % KPIs.
+- Monthly trend chart and top cost-driver chart.
+- Detailed filtered transaction table.
 
-- Transparent overview of plant expenses
-- Monthly cost trend analysis
-- Identification of abnormal spending patterns
-- Structured review and documentation of cost anomalies
-- AI-generated summaries to support finance interpretation
+### 2) Forecast and Dynamic Risk Signals
 
-The solution is designed to reflect how such a tool could realistically be used by plant controlling or finance teams.
+- Actual vs Forecast signal chart.
+- Variance waterfall for cumulative deviation tracking.
+- Table with MoM changes, forecast variance, and anomaly flags.
 
----
+### 3) Anomaly Review Workflow
 
-## Key Features
+- Review-only panel focused on anomaly rows.
+- Status lifecycle: `New`, `Reviewed`, `Explained`, `Action Required`.
+- Finance notes and reason tagging for audit-friendly review.
 
-### 1. Cost Transparency (Tab 1)
-- Tabular view of all expense records
-- Interactive filters (Department, G/L Group, Accounting Month)
-- Monthly total expense trend
-- Top cost-driving G/L groups
-- Summary KPIs for quick interpretation
+### 4) AI Generated Finance Insights
 
-### 2. Forecasting & Dynamic Anomaly Detection (Tab 2)
-- Rolling historical averages used as expected cost benchmarks
-- Automatic detection of unusual cost spikes and drops
-- Visualization of actual vs. expected cost behavior
-- Dynamic detection based on historical patterns rather than static thresholds
+- Produces concise executive commentary from anomaly and budget context.
+- Designed as decision support, not autonomous forecasting.
+- Accepts user API key at runtime and does not hardcode credentials.
 
-### 3. Automated Cost Anomaly Workflow (Tab 3)
-- Dedicated anomaly review panel
-- Status tracking (New, Reviewed, Explained, Action Required)
-- Finance notes for documentation and auditability
-- Exception-based workflow to reduce month-end workload
+## Architecture
 
-### 4. AI-Generated Finance Insights (Tab 4)
-- Short AI-generated summaries based on detected anomalies and forecasts
-- Designed to support, not replace, finance judgment
-- AI does not generate financial figures or forecasts
-- Governance and transparency are explicitly addressed in the UI
+```text
+app.py
+utils/
+  aggregations.py       -> monthly rollups and forecast merge helpers
+  anomaly_detection.py  -> MoM-based anomaly logic and risk flags
+  charts.py             -> Plotly visualizations
+  data_loader.py        -> Excel load, schema normalization, validation
+  ai_engine.py          -> LLM prompt assembly and API client call
+```
 
----
+## Data Input Contract
 
-## Assumptions
+The app supports two Excel sheets:
 
-- Costs are analyzed at **G/L Group level**, which is appropriate for plant controlling use cases
-- Historical monthly behavior represents expected cost patterns unless disrupted by operational or accounting events
-- Forecasting logic is intentionally simple and explainable to ensure finance trust and adoption
+- `Actual_Data`
+- `Forecast_Data`
 
----
+Canonical expected columns:
 
-## Technology Stack
+- `Actual_Data`: `Posting Date`, `Accounting Month`, `Department`, `G/L Group Identifier`, `G/L Group Name`, `Amount`, `Currency`
+- `Forecast_Data`: `Accounting Month`, `Department`, `G/L Group Identifier`, `G/L Group Name`, `Total Cost`, `Currency`
 
-- Python
-- Streamlit
-- Pandas & NumPy
-- Plotly
-- Scikit-learn (supporting anomaly detection logic)
-- External LLM API for AI-generated summaries
+The loader is resilient to common variants and aliases, for example:
 
----
+- Forecast value aliases: `Forecast`, `Total_Cost`, `Budget`, `PlannedCost`, `Total Cost (EUR)` (prefix normalized).
+- Accounting month formats: `1..12`, `2024-05`, `2024/05`, `202405`, standard parseable dates.
+- Key normalization: trims spaces and normalizes numeric-like IDs such as `1001.0 -> 1001`.
 
-## How to Run the Application
+If required fields are still missing, the app raises a readable validation error with available columns.
 
-1. (Optional) Create and activate a virtual environment  
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-3. Run the Streamlit app:
+## Data Source Behavior
 
-    streamlit run app.py
-4. Open the local URL provided in the terminal
+- Default mode: app loads `data/finance_case_study_synthetic_data_TH-2.xlsx`.
+- Custom mode: user can upload `.xlsx` from the sidebar (`Data Source` panel).
+- Uploaded file overrides default data for the active session.
+
+## AI Integration Notes
+
+- AI client is OpenAI-compatible and currently configured with:
+  - Default base URL: `https://api.groq.com/openai/v1`
+  - Default model: `llama-3.3-70b-versatile`
+- If `openai` is unavailable, the app fails gracefully with a clear message in the AI output section.
+
+## Local Setup
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+## Deployment (Streamlit Cloud)
+
+- Repo main file: `app.py`
+- Dependency source: `requirements.txt`
+- After push:
+  - Reboot app from Streamlit Cloud if code changes do not appear.
+  - Clear cache if stale session state causes inconsistent behavior.
+
+## Troubleshooting
+
+### Import errors on cloud (`from utils...`)
+
+- Ensure latest repo includes `utils/__init__.py`.
+- Ensure app path insertion uses project-root priority (`sys.path.insert(0, ...)`).
+
+### `Column(s) ['Total Cost'] do not exist`
+
+- Usually caused by alternate forecast column naming.
+- Loader now maps common aliases automatically.
+- Confirm you uploaded `Forecast_Data` sheet (exact name).
+
+### `invalid literal for int() with base 10: '2024-05'`
+
+- Caused by strict month parsing in older version.
+- Current loader supports date-like accounting month formats.
+
+### AI tab has no action button
+
+- Button appears when filtered actual data exists.
+- If forecast data is empty, app still runs AI with limited budget context and shows a warning.
+
+## Repository Notes
+
+- Included datasets are synthetic and for demonstration/testing workflows.
+- `data/finance_case_study_synthetic_data_TH-2_new.xlsx` is a compatible alternative sample with changed values and unchanged schema.
