@@ -9,7 +9,7 @@ import numpy as np
 
 sys.path.append(os.path.dirname(__file__))
 
-from utils.data_loader import load_data
+from utils.data_loader import load_data, load_data_from_bytes
 from utils.aggregations import aggregate_monthly, top_gl_groups, aggregate_with_forecast
 from utils.anomaly_detection import detect_anomalies
 from utils.charts import (
@@ -38,10 +38,29 @@ st.markdown(
 st.divider()
 
 
-# Load data (from fixed path; no upload UI)
+# Data source (top of sidebar): uploaded file or default sample
 DEFAULT_DATA_PATH = "data/finance_case_study_synthetic_data_TH-2.xlsx"
+st.sidebar.header("Data Source")
+uploaded_file = st.sidebar.file_uploader(
+    "Upload Excel file (.xlsx)",
+    type=["xlsx"],
+    help="Workbook must contain sheets: Actual_Data and Forecast_Data",
+)
 
-actual_df, forecast_df = load_data(DEFAULT_DATA_PATH)
+try:
+    if uploaded_file is not None:
+        actual_df, forecast_df = load_data_from_bytes(uploaded_file.getvalue())
+        st.sidebar.caption(f"Using uploaded file: {uploaded_file.name}")
+    else:
+        actual_df, forecast_df = load_data(DEFAULT_DATA_PATH)
+        st.sidebar.caption("Using default sample dataset")
+except Exception as e:
+    st.error(
+        "Could not load the selected file. Ensure it has sheets named "
+        "'Actual_Data' and 'Forecast_Data'."
+    )
+    st.error(f"Load error: {e}")
+    st.stop()
 
 
 # EUR-only validation (per your dataset)
@@ -545,9 +564,15 @@ elif page == "🧠 AI Generated Finance Insights":
 
     api_key = st.text_input("Enter API Key", type="password")
 
-    if filtered_actual.empty or filtered_forecast.empty:
-        st.info("Select filters that return data to enable AI insights.")
+    if filtered_actual.empty:
+        st.info("Select filters that return actual data to enable AI insights.")
     else:
+        if filtered_forecast.empty:
+            st.warning(
+                "No forecast rows found for the selected filters. "
+                "AI insights will run with actual-cost anomalies and limited budget context."
+            )
+
         def _dedupe_report(text: str) -> str:
             if not text:
                 return text
