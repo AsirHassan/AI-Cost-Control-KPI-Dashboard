@@ -2,12 +2,14 @@
 
 ## Overview
 
-This project was developed as part of a **Data Analyst & Finance Intern**.  
+This project was developed as part of a **Data Analyst & Finance Project**.  
 The objective is to demonstrate how data analytics, forecasting, and automation can support **cost transparency, anomaly detection, and finance decision-making** in a plant controlling environment.
 
 The application is built using **Python and Streamlit**, with a strong focus on usability, explainability, and practical finance workflows rather than technical complexity.
 
 All data used in this project is **synthetic** and provided as part of the project.
+
+Live Demo: https://costcontroldashboard.streamlit.app/
 
 ---
 
