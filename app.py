@@ -7,7 +7,7 @@ import streamlit as st
 import numpy as np
 
 
-sys.path.append(os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(__file__))
 
 from utils.data_loader import load_data, load_data_from_bytes
 from utils.aggregations import aggregate_monthly, top_gl_groups, aggregate_with_forecast
