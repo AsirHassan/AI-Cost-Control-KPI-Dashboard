@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:  # pragma: no cover - runtime dependency guard
+    OpenAI = None
 
 @dataclass
 class LLMConfig:
@@ -33,6 +36,9 @@ def generate_finance_insights(
 
     if not anomaly_summary and not forecast_summary:
         return "No insights generated: anomaly and forecast summaries are empty."
+
+    if OpenAI is None:
+        return "AI insights unavailable: missing dependency 'openai'. Install from requirements."
 
     client = OpenAI(api_key=config.api_key, base_url=config.base_url)
 
