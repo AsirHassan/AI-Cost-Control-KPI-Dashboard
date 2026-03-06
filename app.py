@@ -33,7 +33,6 @@ st.markdown(
     """
 # 💼 Cost Control Dashboard  
 **Expense transparency, forecasting & anomaly detection**  
-*Expense transparency, forecasting & anomaly detection*
 """
 )
 st.divider()
